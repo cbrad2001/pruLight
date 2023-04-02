@@ -11,4 +11,8 @@
 void Accel_start(void);
 void Accel_stop(void);
 
+// Saves a reading of the directional MSB values from the accelerometer to the passed in pointers.
+void Accel_getReading(unsigned char *dx, unsigned char *dy, unsigned char *dz);
+void Accel_getInitialReading(unsigned char *dx, unsigned char *dy, unsigned char *dz);
+
 #endif

@@ -1,7 +1,5 @@
 #include "include/accelerometer.h"
 #include "include/helpers.h"
-#include "include/drumBeats.h"
-#include "include/audioMixer.h"
 #include "include/periodTimer.h"
 
 #include <stdio.h>
@@ -32,11 +30,19 @@
 static void* accelThread(void *vargp);
 
 static int initI2cBus(char *bus, int address);
-static unsigned char* readMsbValues(int i2cFileDesc, unsigned char startRegAddr);
+static void readMsbValues(int i2cFileDesc, unsigned char startRegAddr,
+        unsigned char *xVal, unsigned char *yVal, unsigned char *zVal);
 static void writeI2cReg(int i2cFileDesc, unsigned char regAddr, unsigned char value);
 
 static pthread_t accelThreadID;
 static bool isRunning;
+
+static unsigned char xMsbVal;
+static unsigned char yMsbVal;
+static unsigned char zMsbVal;
+static unsigned char initialX;
+static unsigned char initialY;
+static unsigned char initialZ;
 
 void Accel_start(void)
 {
@@ -57,49 +63,47 @@ void Accel_stop(void)
 
 static void* accelThread(void *vargp)
 {
-    wavedata_t *drumKit = AudioMixer_getDrumkit();  //gathers the previously defined sounds from the drum modules
-
     int i2cFileDesc = initI2cBus(I2CDRV_LINUX_BUS, ACCEL_12C_ADDR);
     
     // runCommand("i2cset -y 1 0x1C 0x2A 1");
     writeI2cReg(i2cFileDesc, ACCEL_CTRL_REG, 1);
 
     printf("Starting accelerometer listener thread!\n");
+
+    // printf("DEBUG: reading the msb values...\n");
+    readMsbValues(i2cFileDesc, FIRST_BYTE_READ_ADDR, &xMsbVal, &yMsbVal, &zMsbVal);
+    // printf("DEBUG: read the msb values...\n");
+
+    initialX = xMsbVal;
+    initialY = yMsbVal;
+    initialZ = zMsbVal;
+
     while (isRunning)
     {
-        Period_markEvent(PERIOD_EVENT_ACCELEROMETER);//specific timer vs the joystick to time each runthru 
-        // printf("DEBUG: reading the msb values...\n");
-        unsigned char *msbValues = readMsbValues(i2cFileDesc, FIRST_BYTE_READ_ADDR); 
-        // printf("DEBUG: read the msb values...\n");
-        unsigned char xMsbVal = msbValues[0];
-        unsigned char yMsbVal = msbValues[1];
-        unsigned char zMsbVal = msbValues[2];
-
-        if (xMsbVal == X_POS_THRESHOLD || xMsbVal == X_NEG_THRESHOLD)   // HI-HAT
-        {
-            AudioMixer_queueSound(&drumKit[0]);
-            sleepForMs(DEBOUNCE_MS);
-        }
-
-        if (yMsbVal == Y_POS_THRESHOLD || yMsbVal == Y_NEG_THRESHOLD)   // BASE
-        {
-            AudioMixer_queueSound(&drumKit[1]);
-            sleepForMs(DEBOUNCE_MS);
-        }
-
-        if (zMsbVal == Z_POS_THRESHOLD || zMsbVal == Z_NEG_THRESHOLD)   // SNARE
-        {
-            AudioMixer_queueSound(&drumKit[2]);
-            sleepForMs(DEBOUNCE_MS);
-        }
-        free(msbValues);
-        // sleepForMs(10);     // "reasonable poll of input every 10ms  - asn description"
-        // seems to become significantly harder to receive drum sounds when this is here
+        readMsbValues(i2cFileDesc, FIRST_BYTE_READ_ADDR, &xMsbVal, &yMsbVal, &zMsbVal);
     }
 
     close(i2cFileDesc);
     return 0;
 }
+
+void Accel_getReading(unsigned char *dx, unsigned char *dy, unsigned char *dz)
+{
+    *dx = xMsbVal;
+    *dy = yMsbVal;
+    *dz = zMsbVal;
+}
+
+void Accel_getInitialReading(unsigned char *dx, unsigned char *dy, unsigned char *dz)
+{
+    *dx = initialX;
+    *dy = initialY;
+    *dz = initialZ;
+}
+
+/*
+*   I2C related functions below
+*/
 
 // provided by I2C guide
 static int initI2cBus(char *bus, int address)
@@ -115,7 +119,8 @@ static int initI2cBus(char *bus, int address)
 }
 
 // provided by I2C guide
-static unsigned char* readMsbValues(int i2cFileDesc, unsigned char startRegAddr)
+static void readMsbValues(int i2cFileDesc, unsigned char startRegAddr, 
+        unsigned char *xVal, unsigned char *yVal, unsigned char *zVal)
 {
     // To read a register, must first write the address
     int res = write(i2cFileDesc, &startRegAddr, sizeof(startRegAddr));
@@ -134,9 +139,6 @@ static unsigned char* readMsbValues(int i2cFileDesc, unsigned char startRegAddr)
         exit(1);
     }
     // printf("DEBUG: read the register at %x\n", startRegAddr);
-    
-    unsigned char *msbBuff = malloc(sizeof(unsigned char)*3);
-    // TODO: extract msb for X, Y, Z and return the buffer
 
     // zeroth byte is the garbage byte, first byte is the X MSB
     // second byte is the X LSB, third byte is the Y MSB
@@ -146,11 +148,9 @@ static unsigned char* readMsbValues(int i2cFileDesc, unsigned char startRegAddr)
     // unsigned char yMsb = buff[3];
     // unsigned char zMsb = buff[5];
 
-    msbBuff[0] = buff[1];
-    msbBuff[1] = buff[3];
-    msbBuff[2] = buff[5];
-
-    return msbBuff;
+    *xVal = buff[1];
+    *yVal = buff[3];
+    *zVal = buff[5];
 }
 
 // provided by I2C guide
