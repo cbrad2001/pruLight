@@ -17,8 +17,8 @@
 #define RANGE_MAX 0.5
 
 typedef struct{
-    double x,
-    double y
+    double x;
+    double y;
 } Points;
 
 Points p;

@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-
+#include <stdalign.h>
 
 // WARNING:
 // Fields in the struct must be aligned to match ARM's alignment
@@ -22,14 +22,14 @@ typedef struct {
     
     
     // 2 byte short (2 byte aligned)
-    _Alignas(uint16_t) short smileCount;
+    alignas(uint16_t) short smileCount;
 
     // // Padding
     // char _p0;
     // char _p1, _p2, _p3;
 
     // Must be dword aligned (multiple of 8)
-    _Alignas(8) uint64_t numMsSinceBigBang;             // Works!
+    alignas(8) uint64_t numMsSinceBigBang;             // Works!
     // _Alignas(uint64_t) uint64_t numMsSinceBigBang;      // Fails!
     
 } sharedMemStruct_t;
