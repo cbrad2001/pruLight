@@ -19,7 +19,9 @@ typedef struct {
     bool isLedOn;
     // 1 byte
     bool isButtonPressed;
-    
+
+    // 8 LEDs on the Neopixel strip. 1 for on, 0 for off.
+    bool led[8];    
     
     // 2 byte short (2 byte aligned)
     alignas(uint16_t) short smileCount;
