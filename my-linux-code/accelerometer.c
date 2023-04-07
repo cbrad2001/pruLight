@@ -1,6 +1,5 @@
 #include "include/accelerometer.h"
 #include "include/helpers.h"
-#include "include/periodTimer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
