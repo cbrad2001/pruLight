@@ -19,18 +19,18 @@
 // My Shared Memory Structure
 // ----------------------------------------------------------------
 typedef struct {
+    
+    uint32_t ledColor[NUM_LEDS];
     // 1 byte
     bool isLedOn;
-    // 1 byte
-    bool led[NUM_LEDS];
     //1B
     bool jsDownPressed;     // "Fire" action
-
+    //1B
     bool jsRightPressed;    // Exits the game
 
 
     // // Padding
-    // char _p0;
+    char _p0;
     // char _p1, _p2, _p3;
 
     // Must be dword aligned (multiple of 8)

@@ -1,10 +1,11 @@
 #include "include/game.h"
 #include "include/helpers.h"
 #include "include/accel_drv.h"
-#include "include/sharedDataStruct.h"
+#include "include/pru_code.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -12,19 +13,6 @@
 #include <sys/mman.h>
 #include <time.h>
 
-// General PRU Memomry Sharing Routine
-// ----------------------------------------------------------------
-#define PRU_ADDR      0x4A300000   // Start of PRU memory Page 184 am335x TRM
-#define PRU_LEN       0x80000      // Length of PRU memory
-#define PRU0_DRAM     0x00000      // Offset to DRAM
-#define PRU1_DRAM     0x02000
-#define PRU_SHAREDMEM 0x10000      // Offset to shared memory
-#define PRU_MEM_RESERVED 0x200     // Amount used by stack and heap
-
-// Convert base address to each memory section
-#define PRU0_MEM_FROM_BASE(base) ( (base) + PRU0_DRAM + PRU_MEM_RESERVED)
-#define PRU1_MEM_FROM_BASE(base) ( (base) + PRU1_DRAM + PRU_MEM_RESERVED)
-#define PRUSHARED_MEM_FROM_BASE(base) ( (base) + PRU_SHAREDMEM)
 
 static bool isRunning;
 static pthread_t gameThreadId, joystickListenerId;
@@ -38,39 +26,11 @@ static void generateXYpoint(double *toChangeX, double *toChangeY);
 // Taken from https://stackoverflow.com/questions/1340729/how-do-you-generate-a-random-double-uniformly-distributed-between-0-and-1-from-c
 static double randMToN(double M, double N);
 
-// Return the address of the PRU's base memory
-volatile void* getPruMmapAddr(void)
-{
-    int fd = open("/dev/mem", O_RDWR | O_SYNC);
-    if (fd == -1) {
-        perror("ERROR: could not open /dev/mem");
-        exit(EXIT_FAILURE);
-    }
-
-    // Points to start of PRU memory.
-    volatile void* pPruBase = mmap(0, PRU_LEN, PROT_READ | PROT_WRITE, MAP_SHARED, fd, PRU_ADDR);
-    if (pPruBase == MAP_FAILED) {
-        perror("ERROR: could not map memory");
-        exit(EXIT_FAILURE);
-    }
-    close(fd);
-
-    return pPruBase;
-}
-
-void freePruMmapAddr(volatile void* pPruBase)
-{
-    if (munmap((void*) pPruBase, PRU_LEN)) {
-        perror("PRU munmap failed");
-        exit(EXIT_FAILURE);
-    }
-}
-
-
 void Game_start(void)
 {
     AccelDrv_init();
     srand((unsigned)time(NULL));
+    pSharedPru0 = PRU_getMapping(); // Get access to shared memory for my uses
     isRunning = true;
     sem_init(&mutex, 0, 0);
     pthread_create(&gameThreadId, NULL, gameThread, NULL);
@@ -91,23 +51,64 @@ void Game_wait(void)
     sem_wait(&mutex);
 }
 
+//temporary
+#define GREEN 0x0f000000
+#define RED 0x000f0000
+#define BLUE 0x00000f00
+
+static void populate_with(uint32_t code){
+    for (int i = 0; i < 8; i++){
+        pSharedPru0->ledColor[i] = code;
+    }
+}
+
 static void* gameThread(void *vargp)
 {
-    // Get access to shared memory for my uses
-    volatile void *pPruBase = getPruMmapAddr();
-    pSharedPru0 = PRU0_MEM_FROM_BASE(pPruBase);
+    
+    double initX = 0, initY = 0, initZ = 0;
 
-    double initX, initY, initZ;
-    AccelDrv_getReading(&initX, &initY, &initZ);
-
-    double xPoint, yPoint;
+    double xPoint = 0, yPoint = 0;
     generateXYpoint(&xPoint, &yPoint);
+
+    double HYSTERESIS = 0.1;
+    isRunning = true;
 
     // Notes: Leaning left gives positive Y values, and right gives negative Y values
     // Tilting up gives negative X values, and down gives positive X values
     while (isRunning) {
         // TODO: implement accelerometer logic
+
+        AccelDrv_getReading(&initX, &initY, &initZ);
+
+        // if left (-1 to 0): red
+        if (initX <= xPoint-HYSTERESIS){
+            printf("RED\n");
+            populate_with(RED);
+        }
+
+        //if right: green
+        if (initX >= xPoint+HYSTERESIS){
+            printf("GREEN\n");
+            populate_with(GREEN);            
+        }
+    
+
+        //if centered: blue
+        if (initX > xPoint-HYSTERESIS && initX < xPoint+HYSTERESIS ){
+            printf("BLUE\n");
+            populate_with(BLUE);
+        }
+        
+        printf("Printing hex values:\n");
+        for (int i = 0; i < 8; i++){
+            printf("hex%i: %02x\t",i, pSharedPru0->ledColor[i]);
+        }
+        
+
+
+        sleep(1);
     }
+    return 0;
 }
 
 static void* joystickListener(void *vargp)
@@ -122,6 +123,7 @@ static void* joystickListener(void *vargp)
             // Check for the "Fire" condition here
         }
     }
+    return 0;
 }
 
 double randMToN(double M, double N)
@@ -149,4 +151,6 @@ static void generateXYpoint(double *toChangeX, double *toChangeY)
     else {
         *toChangeY += randY;
     }
+
+    printf("X point: %f\tY point: %f\n", *toChangeX, *toChangeY);
 }
