@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <pru_cfg.h>
 #include "resource_table_empty.h"
-#include "../sharedMem-Linux/sharedDataStruct.h"
+#include "../my-linux-code/include/sharedDataStruct.h"
 
 // Reference for shared RAM:
 // https://markayoder.github.io/PRUCookbook/05blocks/blocks.html#_controlling_the_pwm_frequency
@@ -42,6 +42,10 @@ volatile register uint32_t __R31;   // input GPIO register
 //   = JSRT (Joystick Right) on Zen Cape
 //   (Happens to be bit 15 and p8_15; just a coincidence; see P8 header info sheet)
 #define JOYSTICK_RIGHT_MASK (1 << 15)
+
+// GPIO Input P8_16 = pru0_pru_r31_14
+//   = JSDN (Joystick Down) on Zen Cape
+#define JOYSTICK_DOWN_MASK (1 << 14)
 
 #define STR_LEN         8       // # LEDs in our string
 #define oneCyclesOn     700/5   // Stay on 700ns
@@ -121,22 +125,32 @@ void led(){
 void main(void)
 {
     // Initialize:
-    pSharedMemStruct->isLedOn = true;
-    pSharedMemStruct->isButtonPressed = false;
-    pSharedMemStruct->smileCount = 0x5566;
-    pSharedMemStruct->numMsSinceBigBang = 0x0000111122223333;
+    pSharedMemStruct->numMsSinceBigBang = 0x0000111122223333;  // Use this to test for correct padding
+    pSharedMemStruct->jsDownPressed = 0;
+    pSharedMemStruct->jsRightPressed = 0;
+
+    for (int i = 0; i < NUM_LEDS; i++) {
+        pSharedMemStruct->led[i] = LED_OFF;
+    }
 
     while (true) { 
 
         // Drive LED from shared memory
-        if (pSharedMemStruct->isLedOn) {
-            __R30 |= DIGIT_ON_OFF_MASK;
-        } else {
-            __R30 &= ~DIGIT_ON_OFF_MASK;
+        // if (pSharedMemStruct->isLedOn) {
+        //     __R30 |= DIGIT_ON_OFF_MASK;
+        // } else {
+        //     __R30 &= ~DIGIT_ON_OFF_MASK;
+        // }
+
+        for (int i = 0; i < NUM_LEDS; i++) {
+            if (pSharedMemStruct->led[i] == LED_ON) {
+                // turn on the LED here
+            }
         }
 
         // Sample button state to shared memory
-        pSharedMemStruct->isButtonPressed = (__R31 & JOYSTICK_RIGHT_MASK) != 0;
+        pSharedMemStruct->jsRightPressed = (__R31 & JOYSTICK_RIGHT_MASK) != 0;
+        pSharedMemStruct->jsDownPressed = (__R31 & JOYSTICK_DOWN_MASK) != 0;
     }
 }
 

@@ -14,21 +14,17 @@
 
 // My Shared Memory Structure
 // ----------------------------------------------------------------
+#define NUM_LEDS 8
+#define LED_OFF 0
+#define LED_ON 1
+
 typedef struct {
-    // 1 byte
-    bool isLedOn;
-    // 1 byte
-    bool isButtonPressed;
-
     // 8 LEDs on the Neopixel strip. 1 for on, 0 for off.
-    bool led[8];    
-    
-    // 2 byte short (2 byte aligned)
-    alignas(uint16_t) short smileCount;
+    bool led[NUM_LEDS];   
 
-    // // Padding
-    // char _p0;
-    // char _p1, _p2, _p3;
+    // Only down and right are used for the game
+    bool jsDownPressed;     // "Fire" action
+    bool jsRightPressed;    // Exits the game
 
     // Must be dword aligned (multiple of 8)
     alignas(8) uint64_t numMsSinceBigBang;             // Works!
