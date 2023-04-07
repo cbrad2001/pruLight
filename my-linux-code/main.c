@@ -7,7 +7,7 @@
 #include <time.h>
 
 #include "include/sharedDataStruct.h"
-#include "include/accelerometer.h"
+#include "include/accel_drv.h"
 
 // General PRU Memomry Sharing Routine
 // ----------------------------------------------------------------
