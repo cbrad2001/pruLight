@@ -20,7 +20,7 @@
 // ----------------------------------------------------------------
 typedef struct {
     
-    uint32_t ledColor[NUM_LEDS];
+    _Alignas(4) uint32_t ledColor[NUM_LEDS];
     // 1 byte
     bool isLedOn;
     //1B
