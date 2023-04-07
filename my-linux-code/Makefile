@@ -2,8 +2,8 @@
 # by Brian Fraser
 
 # Edit this file to compile extra C files into their own programs.
-TARGETS = main.c
-
+TARGETS = my-linux-code
+SOURCES = accel_drv.c main.c helpers.c i2c_drv.c
 
 PUBDIR = $(HOME)/cmpt433/public/myApps
 
@@ -24,7 +24,7 @@ OUTPUTS= $(addprefix $(OUTDIR)/, $(TARGETS))
 all: $(TARGETS)
 
 $(TARGETS):
-	$(CC_C) $(CFLAGS) $@.c -o $(OUTDIR)/$@ -lpthread
+	$(CC_C) $(CFLAGS) $(SOURCES) -o $(OUTDIR)/$(TARGETS) -lpthread
 
 PrimeThread:
 	make --directory=primeThread

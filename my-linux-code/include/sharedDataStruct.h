@@ -3,7 +3,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdalign.h>
+// #include <stdalign.h>
+
+#define NUM_LEDS 8
+#define LED_OFF 0
+#define LED_ON 1
 
 // WARNING:
 // Fields in the struct must be aligned to match ARM's alignment
@@ -14,20 +18,23 @@
 
 // My Shared Memory Structure
 // ----------------------------------------------------------------
-#define NUM_LEDS 8
-#define LED_OFF 0
-#define LED_ON 1
-
 typedef struct {
-    // 8 LEDs on the Neopixel strip. 1 for on, 0 for off.
-    bool led[NUM_LEDS];   
-
-    // Only down and right are used for the game
+    // 1 byte
+    bool isLedOn;
+    // 1 byte
+    bool led[NUM_LEDS];
+    //1B
     bool jsDownPressed;     // "Fire" action
+
     bool jsRightPressed;    // Exits the game
 
+
+    // // Padding
+    // char _p0;
+    // char _p1, _p2, _p3;
+
     // Must be dword aligned (multiple of 8)
-    alignas(8) uint64_t numMsSinceBigBang;             // Works!
+    _Alignas(8) uint64_t numMsSinceBigBang;             // Works!
     // _Alignas(uint64_t) uint64_t numMsSinceBigBang;      // Fails!
     
 } sharedMemStruct_t;

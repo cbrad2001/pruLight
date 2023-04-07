@@ -20,7 +20,7 @@ all: nested-cross-compile pru-copy
 # Cross compile your C/C++ programs
 # Uncommet this for any folder you want to cross-compile
 nested-cross-compile:
-	@make --directory=sharedMem-Linux2
+	@make --directory=my-linux-code
 
 pru-copy:
 	mkdir -p $(HOME)/cmpt433/public/pru/
