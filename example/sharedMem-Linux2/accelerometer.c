@@ -29,7 +29,7 @@
 static void* accelThread(void *vargp);
 
 static int initI2cBus(char *bus, int address);
-static void readMsbValues(int i2cFileDesc, unsigned char startRegAddr,
+static void readRegisterValues(int i2cFileDesc, unsigned char startRegAddr,
         unsigned char *xVal, unsigned char *yVal, unsigned char *zVal);
 static void writeI2cReg(int i2cFileDesc, unsigned char regAddr, unsigned char value);
 
@@ -70,7 +70,7 @@ static void* accelThread(void *vargp)
     printf("Starting accelerometer listener thread!\n");
 
     // printf("DEBUG: reading the msb values...\n");
-    readMsbValues(i2cFileDesc, FIRST_BYTE_READ_ADDR, &xMsbVal, &yMsbVal, &zMsbVal);
+    readRegisterValues(i2cFileDesc, FIRST_BYTE_READ_ADDR, &xMsbVal, &yMsbVal, &zMsbVal);
     // printf("DEBUG: read the msb values...\n");
 
     initialX = xMsbVal;
@@ -79,7 +79,7 @@ static void* accelThread(void *vargp)
 
     while (isRunning)
     {
-        readMsbValues(i2cFileDesc, FIRST_BYTE_READ_ADDR, &xMsbVal, &yMsbVal, &zMsbVal);
+        readRegisterValues(i2cFileDesc, FIRST_BYTE_READ_ADDR, &xMsbVal, &yMsbVal, &zMsbVal);
     }
 
     close(i2cFileDesc);
@@ -118,7 +118,7 @@ static int initI2cBus(char *bus, int address)
 }
 
 // provided by I2C guide
-static void readMsbValues(int i2cFileDesc, unsigned char startRegAddr, 
+static void readRegisterValues(int i2cFileDesc, unsigned char startRegAddr, 
         unsigned char *xVal, unsigned char *yVal, unsigned char *zVal)
 {
     // To read a register, must first write the address

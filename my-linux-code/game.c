@@ -1,6 +1,6 @@
 #include "include/game.h"
 #include "include/helpers.h"
-#include "include/accelerometer.h"
+#include "include/accel_drv.h"
 #include "include/sharedDataStruct.h"
 
 #include <stdlib.h>
@@ -10,6 +10,7 @@
 #include <semaphore.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <time.h>
 
 // General PRU Memomry Sharing Routine
 // ----------------------------------------------------------------
@@ -32,6 +33,10 @@ static volatile sharedMemStruct_t *pSharedPru0;
 
 static void* gameThread(void *vargp);
 static void* joystickListener(void *vargp);
+static void generateXYpoint(double *toChangeX, double *toChangeY);
+
+// Taken from https://stackoverflow.com/questions/1340729/how-do-you-generate-a-random-double-uniformly-distributed-between-0-and-1-from-c
+static double randMToN(double M, double N);
 
 // Return the address of the PRU's base memory
 volatile void* getPruMmapAddr(void)
@@ -64,6 +69,8 @@ void freePruMmapAddr(volatile void* pPruBase)
 
 void Game_start(void)
 {
+    AccelDrv_init();
+    srand((unsigned)time(NULL));
     isRunning = true;
     sem_init(&mutex, 0, 0);
     pthread_create(&gameThreadId, NULL, gameThread, NULL);
@@ -76,6 +83,7 @@ void Game_end(void)
     pthread_join(gameThreadId, NULL);
     pthread_join(joystickListenerId, NULL);
     sem_destroy(&mutex);
+    AccelDrv_cleanup();
 }
 
 void Game_wait(void)
@@ -89,9 +97,14 @@ static void* gameThread(void *vargp)
     volatile void *pPruBase = getPruMmapAddr();
     pSharedPru0 = PRU0_MEM_FROM_BASE(pPruBase);
 
-    char initX, initY, initZ;
-    Accel_getInitialReading(&initX, &initY, &initZ);
+    double initX, initY, initZ;
+    AccelDrv_getReading(&initX, &initY, &initZ);
 
+    double xPoint, yPoint;
+    generateXYpoint(&xPoint, &yPoint);
+
+    // Notes: Leaning left gives positive Y values, and right gives negative Y values
+    // Tilting up gives negative X values, and down gives positive X values
     while (isRunning) {
         // TODO: implement accelerometer logic
     }
@@ -104,6 +117,36 @@ static void* joystickListener(void *vargp)
             pSharedPru0->jsRightPressed = false;
             Game_end();
         }
-        sleepForMs(5);
+        if (pSharedPru0->jsDownPressed) {
+            pSharedPru0->jsDownPressed = false;
+            // Check for the "Fire" condition here
+        }
+    }
+}
+
+double randMToN(double M, double N)
+{
+    return M + (rand() / ( RAND_MAX / (N-M) ) ) ;  
+}
+
+static void generateXYpoint(double *toChangeX, double *toChangeY)
+{
+    // Randomly pick a point here
+    double randX = randMToN(-0.5, 0.5);
+    double randY = randMToN(-0.5, 0.5);
+
+    // Since 90 degrees is +- 1.0, random point must not exceed that value
+    if (*toChangeX + randX > 1.0 || *toChangeX + randX < -1.0) {
+        *toChangeX -= randX;
+    }
+    else {
+        *toChangeX += randX;
+    }
+
+    if (*toChangeY + randY > 1.0 || *toChangeY + randY < -1.0) {
+        *toChangeY -= randY;
+    }
+    else {
+        *toChangeY += randY;
     }
 }

@@ -29,5 +29,8 @@ $(TARGETS):
 PrimeThread:
 	make --directory=primeThread
 
+testAccel:
+	make -C ../testModule
+
 clean:
 	rm -f $(OUTPUTS)
