@@ -91,7 +91,7 @@ void lightLED(void){
      __R30 &= ~(0x1<<DATA_PIN);   // Clear the GPIO pin
     __delay_cycles(resetCycles);
 
-    __halt();
+    // __halt();
 }
 
 void main(void)
