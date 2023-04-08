@@ -46,7 +46,7 @@ volatile register uint32_t __R31;   // input GPIO register
 
 // GPIO Output: P8_12 = pru0_pru_r30_14 
 //   = LEDDP2 (Turn on/off right 14-seg digit) on Zen cape
-#define DIGIT_ON_OFF_MASK (1 << 14)
+// #define DIGIT_ON_OFF_MASK (1 << 14)
 // GPIO Input: P8_15 = pru0_pru_r31_15 
 //   = JSRT (Joystick Right) on Zen Cape
 //   (Happens to be bit 15 and p8_15; just a coincidence; see P8 header info sheet)
@@ -54,7 +54,7 @@ volatile register uint32_t __R31;   // input GPIO register
 
 // GPIO Input P8_16 = pru0_pru_r31_14
 //   = JSDN (Joystick Down) on Zen Cape
-// #define JOYSTICK_DOWN_MASK (1 << 14)
+#define JOYSTICK_DOWN_MASK (1 << 14)
 
 
 // Shared Memory Configuration
@@ -90,8 +90,6 @@ void lightLED(void){
 
      __R30 &= ~(0x1<<DATA_PIN);   // Clear the GPIO pin
     __delay_cycles(resetCycles);
-
-    // __halt();
 }
 
 void main(void)
@@ -130,7 +128,7 @@ void main(void)
     pSharedMemStruct->jsRightPressed = false;
 
     for (int i = 0; i < STR_LEN; i++){
-        pSharedMemStruct->ledColor[i] = 0x000f0000;
+        pSharedMemStruct->ledColor[i] = 0x00000000;
     }
     
     // pSharedMemStruct->smileCount = 0x5566;
@@ -151,6 +149,6 @@ void main(void)
 
         // Sample button state to shared memory
         pSharedMemStruct->jsRightPressed = (__R31 & JOYSTICK_RIGHT_MASK) != 0;
-        // pSharedMemStruct->jsDownPressed = (__R31 & JOYSTICK_DOWN_MASK) != 0;
+        pSharedMemStruct->jsDownPressed = (__R31 & JOYSTICK_DOWN_MASK) != 0;
     }
 }

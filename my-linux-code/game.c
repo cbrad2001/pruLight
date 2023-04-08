@@ -77,54 +77,82 @@ int Game_getCurrentScore(void)
 #define GREEN 0x0f000000
 #define RED 0x000f0000
 #define BLUE 0x00000f00
+#define NONE 0x00000000
 
-static void populate_with(uint32_t code){
-    for (int i = 0; i < 8; i++){
-        pSharedPru0->ledColor[i] = code;
+typedef struct{
+    uint32_t color;
+    int start;
+    int end;
+} neo_display_t;
+
+static void populate_with(uint32_t code, int start, int end){
+    for (int i = 0; i <= 7; i++){
+        if (i >= start && i <= end)
+            pSharedPru0->ledColor[i] = code;
+        else
+            pSharedPru0->ledColor[i] = NONE;
     }
 }
 
 static void* gameThread(void *vargp)
 {
-    
+    neo_display_t toDisplay;
+
     currentX = 0, currentY = 0, currentZ = 0;
     xPoint = currentX, yPoint = currentY;
     generateXYpoint(&xPoint, &yPoint);
 
     // Notes: Leaning left gives positive Y values, and right gives negative Y values
     // Tilting up gives negative X values, and down gives positive X values
+    isRunning = true;
     while (isRunning) {
         AccelDrv_getReading(&currentX, &currentY, &currentZ);
 
-        // if left (-1 to 0): red
-        if (currentX <= xPoint-HYSTERESIS){
-            printf("RED\n");
-            populate_with(RED);
+        printf("    %15s: 0x%02x\n", "isDownPressed", pSharedPru0->jsDownPressed);
+        printf("    %15s: 0x%02x\n", "isRightPressed", pSharedPru0->jsRightPressed);
+
+        // Left-Right plane determines COLOR
+
+        if (currentX <= xPoint-HYSTERESIS)      // if left (-1 to 0): red
+            toDisplay.color = RED;
+        
+        if (currentX >= xPoint+HYSTERESIS)      // if right: green
+            toDisplay.color = GREEN;           
+            
+        if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS) //if centered: blue
+            toDisplay.color = BLUE; 
+
+        // Up-Down plane determines LEDS
+
+        if (currentY <= yPoint-HYSTERESIS){  // pointing DOWN, display bottom 3 LEDS
+            toDisplay.start = 0; //bottom 3 LEDs
+            toDisplay.end = 2;
         }
 
-        //if right: green
-        if (currentX >= xPoint+HYSTERESIS){
-            printf("GREEN\n");
-            populate_with(GREEN);            
-        }
-    
-
-        //if centered: blue
-        if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS ){
-            printf("BLUE\n");
-            populate_with(BLUE);
+        if (currentY >= yPoint+HYSTERESIS){  // pointing DOWN, display bottom 3 LEDS
+            toDisplay.start = 5; //top 3 LEDs
+            toDisplay.end = 7;
         }
         
-        printf("Printing hex values:\n");
-        for (int i = 0; i < 8; i++){
-            printf("hex%i: %02x\t",i, pSharedPru0->ledColor[i]);
+        if (currentY > yPoint-HYSTERESIS && currentY < yPoint+HYSTERESIS){
+            toDisplay.start = 0; // ALL LEDS
+            toDisplay.end = 7;
         }
+
+        // POPULATE SHARED MEM WITH DATA
+
+        populate_with(toDisplay.color,toDisplay.start, toDisplay.end);
+        
+        // printf("Printing hex values:\n");
+        // for (int i = 0; i < 8; i++){
+        //     printf("hex%i: %02x\t",i, pSharedPru0->ledColor[i]);
+        // }
 
         // Execution should stop here when LED animation is playing 
         // when user "hits" the generated point.
         pthread_mutex_lock(&animationLock);
         pthread_mutex_unlock(&animationLock);
-        
+
         sleep(1);
     }
     return 0;
