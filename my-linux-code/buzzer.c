@@ -16,14 +16,14 @@
 #define BUZZER_DUTY_CYCLE_FILE BUZZER_DIR "/duty_cycle"
 #define BUZZER_ENABLE_FILE BUZZER_DIR "/enable"
 
-static Note noteBuffer[1024];
+static Note noteBuffer[50];
 static int bufferPos;
 static pthread_t buzzerThreadId;
 static bool notesInBuffer, isPlayingNotes;
 static bool isRunning;
 
 static void writeToFile(char *fileName, char *value);
-static void playNote(Note *note);
+static void playNotesInBuffer(void);
 static void* buzzerThread(void *vargp);
 
 void Buzzer_startListening(void)
@@ -41,12 +41,17 @@ void Buzzer_stopListening(void)
     pthread_join(buzzerThreadId, NULL);
 }
 
-void Buzzer_addToQueue(Note toPlay)
+void Buzzer_addToQueue(Note *toPlay, int numToPlay)
 {
     // Do not add new notes to the buffer if it is playing notes
     if (!isPlayingNotes) {
-        noteBuffer[bufferPos] = toPlay;
-        bufferPos += 1;
+        // noteBuffer[bufferPos] = toPlay;
+        // bufferPos += 1;
+        // notesInBuffer = true;
+        for (int i = 0; i < numToPlay; i++) {
+            noteBuffer[i] = toPlay[i];
+        }
+        bufferPos = numToPlay - 1;
         notesInBuffer = true;
     }
 }
@@ -55,12 +60,20 @@ static void* buzzerThread(void *vargp)
 {
     while (isRunning)
     {
-
+        if (notesInBuffer) {
+            playNotesInBuffer();
+        }
     }
 }
 
-static void playNote(Note *note)
+static void playNotesInBuffer(void)
 {
     // TODO: play note and sleep for note->durationInMs amount of time then turn off buzzer
     // then remote note from queue
+    for (int i = 0; i < bufferPos; i++) {
+        if (noteBuffer[i].isNote) {
+            // TODO: play the note
+        }
+        sleepForMs(noteBuffer[i].durationInMs);
+    }
 }

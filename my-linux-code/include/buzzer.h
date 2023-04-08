@@ -19,8 +19,11 @@ typedef struct Note {
     uint32_t durationInMs;
 } Note;
 
+// Starts and stops a background thread that listens to what notes to play to the buzzer.
 void Buzzer_startListening(void);
 void Buzzer_stopListening(void);
-void Buzzer_addToQueue(Note toPlay);
+
+// Adds the passed in list of notes to a buffer for the buzzer to play.
+void Buzzer_addToQueue(Note *toPlay, int numToPlay);
 
 #endif
