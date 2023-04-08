@@ -32,6 +32,7 @@ void Buzzer_startListening(void)
     notesInBuffer = false;
     isPlayingNotes = false;
     isRunning = true;
+    runCommand("config-pin p9_22 pwm");
     pthread_create(&buzzerThreadId, NULL, buzzerThread, NULL);
 }
 
@@ -68,12 +69,23 @@ static void* buzzerThread(void *vargp)
 
 static void playNotesInBuffer(void)
 {
-    // TODO: play note and sleep for note->durationInMs amount of time then turn off buzzer
-    // then remote note from queue
+    char periodBuf[10];
+    char dutyBuf[10];
+    isPlayingNotes = true;
     for (int i = 0; i < bufferPos; i++) {
         if (noteBuffer[i].isNote) {
             // TODO: play the note
+            sprintf(periodBuf, "%d", noteBuffer[i].period);
+            sprintf(dutyBuf, "%d", noteBuffer[i].dutyCycle);
         }
         sleepForMs(noteBuffer[i].durationInMs);
+        writeToFile(BUZZER_ENABLE_FILE, "0");
     }
+    notesInBuffer = false;
+}
+
+static void writeToFile(char *fileName, char *value)
+{
+    FILE *toWrite = fopen(fileName, "w");
+    fclose(toWrite);
 }
