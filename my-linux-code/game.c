@@ -118,6 +118,7 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
             pSharedPru0->ledColor[7] = GREEN_BR;
         if (dir_LR == level)
             pSharedPru0->ledColor[7] = BLUE_BR;
+        return;
     }
     
     if ( dir_UD == down && dist == very_far){         //FAR AWAY DOWN
@@ -127,14 +128,34 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
             pSharedPru0->ledColor[0] = GREEN_BR;
         if (dir_LR == level)
             pSharedPru0->ledColor[0] = BLUE_BR;
+        return;
     }
 
-    if ( dir_UD == level && dist == hit){           // HIT
+    if ( dir_LR == left && dist == hit){           // HIT but RIGHT
+        for (int i = 0; i <= 7; i++)
+            pSharedPru0->ledColor[i] = RED;
+        
+        pSharedPru0->ledColor[3] = RED_BR;
+        pSharedPru0->ledColor[4] = RED_BR;
+        return;
+    }
+
+    if ( dir_UD == level && dir_LR == level && dist == hit){           // HIT
         for (int i = 0; i <= 7; i++)
             pSharedPru0->ledColor[i] = BLUE;
         
         pSharedPru0->ledColor[3] = BLUE_BR;
         pSharedPru0->ledColor[4] = BLUE_BR;
+        return;
+    }
+
+    if ( dir_LR == right && dist == hit){           // HIT but RIGHT
+        for (int i = 0; i <= 7; i++)
+            pSharedPru0->ledColor[i] = GREEN;
+        
+        pSharedPru0->ledColor[3] = GREEN_BR;
+        pSharedPru0->ledColor[4] = GREEN_BR;
+        return;
     }
 
     if ( dir_UD == up && dist == far){              //FAR AWAY UP
@@ -154,6 +175,7 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
             pSharedPru0->ledColor[6] = BLUE_BR;
             pSharedPru0->ledColor[5] = BLUE;
         }
+        return;
     }
 
      if ( dir_UD == down && dist == far){           //FAR AWAY DOWN
@@ -173,6 +195,7 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
             pSharedPru0->ledColor[1] = BLUE_BR;
             pSharedPru0->ledColor[0] = BLUE;
         }
+        return;
     }
 
     if ( dir_UD == up && dist == near){              // CLOSE UP
@@ -192,6 +215,7 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
             pSharedPru0->ledColor[4] = BLUE_BR;
             pSharedPru0->ledColor[3] = BLUE;
         }
+        return;
     }
 
     if ( dir_UD == down && dist == near){           // CLOSE DOWN
@@ -211,6 +235,7 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
             pSharedPru0->ledColor[2] = BLUE_BR;
             pSharedPru0->ledColor[1] = BLUE;
         }
+        return;
     }
 }
 
