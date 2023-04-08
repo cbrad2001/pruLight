@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <math.h>
 
 #define HYSTERESIS 0.1
 
@@ -75,23 +76,155 @@ int Game_getCurrentScore(void)
 
 //temporary
 #define GREEN 0x0f000000
+#define GREEN_BR 0xff000000
 #define RED 0x000f0000
+#define RED_BR 0x00ff0000
 #define BLUE 0x00000f00
+#define BLUE_BR 0x0000ff00
 #define NONE 0x00000000
 
+typedef enum {
+    near,
+    far,
+    very_far,
+    hit,
+} distance_t;
+
+typedef enum {
+    up,
+    down,
+    level,
+    left,
+    right,
+} direction_t;
+
 typedef struct{
-    uint32_t color;
-    int start;
-    int end;
+    // uint32_t color;
+    direction_t x_dir;
+    direction_t y_dir;
+    distance_t y_dist;
 } neo_display_t;
 
-static void populate_with(uint32_t code, int start, int end){
+static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dist){
+
     for (int i = 0; i <= 7; i++){
-        if (i >= start && i <= end)
-            pSharedPru0->ledColor[i] = code;
-        else
-            pSharedPru0->ledColor[i] = NONE;
+        pSharedPru0->ledColor[i] = NONE;
     }
+
+    if ( dir_UD == up && dist == very_far){         //VERY FAR AWAY UP
+        if (dir_LR == left)
+            pSharedPru0->ledColor[7] = RED_BR;
+        if (dir_LR == right)
+            pSharedPru0->ledColor[7] = GREEN_BR;
+        if (dir_LR == level)
+            pSharedPru0->ledColor[7] = BLUE_BR;
+    }
+    
+    if ( dir_UD == down && dist == very_far){         //FAR AWAY DOWN
+        if (dir_LR == left)
+            pSharedPru0->ledColor[0] = RED_BR;
+        if (dir_LR == right)
+            pSharedPru0->ledColor[0] = GREEN_BR;
+        if (dir_LR == level)
+            pSharedPru0->ledColor[0] = BLUE_BR;
+    }
+
+    if ( dir_UD == level && dist == hit){           // HIT
+        for (int i = 0; i <= 7; i++)
+            pSharedPru0->ledColor[i] = BLUE;
+        
+        pSharedPru0->ledColor[3] = BLUE_BR;
+        pSharedPru0->ledColor[4] = BLUE_BR;
+    }
+
+    if ( dir_UD == up && dist == far){              //FAR AWAY UP
+        if (dir_LR == left){
+            pSharedPru0->ledColor[7] = RED;
+            pSharedPru0->ledColor[6] = RED_BR;
+            pSharedPru0->ledColor[5] = RED;
+        }
+            
+        if (dir_LR == right){
+            pSharedPru0->ledColor[7] = GREEN;
+            pSharedPru0->ledColor[6] = GREEN_BR;
+            pSharedPru0->ledColor[5] = GREEN;
+        }
+        if (dir_LR == level){
+            pSharedPru0->ledColor[7] = BLUE;
+            pSharedPru0->ledColor[6] = BLUE_BR;
+            pSharedPru0->ledColor[5] = BLUE;
+        }
+    }
+
+     if ( dir_UD == down && dist == far){           //FAR AWAY DOWN
+        if (dir_LR == left){
+            pSharedPru0->ledColor[2] = RED;
+            pSharedPru0->ledColor[1] = RED_BR;
+            pSharedPru0->ledColor[0] = RED;
+        }
+            
+        if (dir_LR == right){
+            pSharedPru0->ledColor[2] = GREEN;
+            pSharedPru0->ledColor[1] = GREEN_BR;
+            pSharedPru0->ledColor[0] = GREEN;
+        }
+        if (dir_LR == level){
+            pSharedPru0->ledColor[2] = BLUE;
+            pSharedPru0->ledColor[1] = BLUE_BR;
+            pSharedPru0->ledColor[0] = BLUE;
+        }
+    }
+
+    if ( dir_UD == up && dist == near){              // CLOSE UP
+        if (dir_LR == left){
+            pSharedPru0->ledColor[6] = RED;
+            pSharedPru0->ledColor[5] = RED_BR;
+            pSharedPru0->ledColor[4] = RED;
+        }
+            
+        if (dir_LR == right){
+            pSharedPru0->ledColor[5] = GREEN;
+            pSharedPru0->ledColor[4] = GREEN_BR;
+            pSharedPru0->ledColor[3] = GREEN;
+        }
+        if (dir_LR == level){
+            pSharedPru0->ledColor[5] = BLUE;
+            pSharedPru0->ledColor[4] = BLUE_BR;
+            pSharedPru0->ledColor[3] = BLUE;
+        }
+    }
+
+    if ( dir_UD == down && dist == near){           // CLOSE DOWN
+        if (dir_LR == left){
+            pSharedPru0->ledColor[3] = RED;
+            pSharedPru0->ledColor[2] = RED_BR;
+            pSharedPru0->ledColor[1] = RED;
+        }
+            
+        if (dir_LR == right){
+            pSharedPru0->ledColor[3] = GREEN;
+            pSharedPru0->ledColor[2] = GREEN_BR;
+            pSharedPru0->ledColor[1] = GREEN;
+        }
+        if (dir_LR == level){
+            pSharedPru0->ledColor[3] = BLUE;
+            pSharedPru0->ledColor[2] = BLUE_BR;
+            pSharedPru0->ledColor[1] = BLUE;
+        }
+    }
+}
+
+static double getDist(double pt1, double pt2){
+    return sqrt((pt1*pt1)-(pt2*pt2));
+}
+
+static distance_t convertDistToVal(double dist){
+    if (dist > 0.7) 
+        return very_far;
+    else if (dist > 0.4) 
+        return far;
+    else 
+        return near;
 }
 
 static void* gameThread(void *vargp)
@@ -99,6 +232,7 @@ static void* gameThread(void *vargp)
     neo_display_t toDisplay;
 
     currentX = 0, currentY = 0, currentZ = 0;
+    double dist = 0; 
     xPoint = currentX, yPoint = currentY;
     generateXYpoint(&xPoint, &yPoint);
 
@@ -114,34 +248,36 @@ static void* gameThread(void *vargp)
         // Left-Right plane determines COLOR
 
         if (currentX <= xPoint-HYSTERESIS)      // if left (-1 to 0): red
-            toDisplay.color = RED;
+            toDisplay.x_dir = left;
         
         if (currentX >= xPoint+HYSTERESIS)      // if right: green
-            toDisplay.color = GREEN;           
+            toDisplay.x_dir = right;           
             
         if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS) //if centered: blue
-            toDisplay.color = BLUE; 
+            toDisplay.x_dir = level; 
 
         // Up-Down plane determines LEDS
 
         if (currentY <= yPoint-HYSTERESIS){  // pointing DOWN, display bottom 3 LEDS
-            toDisplay.start = 0; //bottom 3 LEDs
-            toDisplay.end = 2;
+            dist = getDist(currentY,yPoint-HYSTERESIS);
+            toDisplay.y_dist = convertDistToVal(dist);
+            toDisplay.y_dir = down;
         }
 
-        if (currentY >= yPoint+HYSTERESIS){  // pointing DOWN, display bottom 3 LEDS
-            toDisplay.start = 5; //top 3 LEDs
-            toDisplay.end = 7;
+        if (currentY >= yPoint+HYSTERESIS){  // pointing UP, display top 3 LEDS
+            dist = getDist(currentY,yPoint+HYSTERESIS);
+            toDisplay.y_dist = convertDistToVal(dist);
+            toDisplay.y_dir = up;
         }
         
         if (currentY > yPoint-HYSTERESIS && currentY < yPoint+HYSTERESIS){
-            toDisplay.start = 0; // ALL LEDS
-            toDisplay.end = 7;
+            toDisplay.y_dist = hit;
+            toDisplay.y_dir = level;
         }
 
         // POPULATE SHARED MEM WITH DATA
 
-        populate_with(toDisplay.color,toDisplay.start, toDisplay.end);
+        populate_with(toDisplay.x_dir,toDisplay.y_dir,toDisplay.y_dist);
         
         // printf("Printing hex values:\n");
         // for (int i = 0; i < 8; i++){
@@ -153,7 +289,7 @@ static void* gameThread(void *vargp)
         pthread_mutex_lock(&animationLock);
         pthread_mutex_unlock(&animationLock);
 
-        sleep(1);
+        sleepForMs(10);
     }
     return 0;
 }

@@ -24,7 +24,7 @@ OUTPUTS= $(addprefix $(OUTDIR)/, $(TARGETS))
 all: $(TARGETS)
 
 $(TARGETS):
-	$(CC_C) $(CFLAGS) $(SOURCES) -o $(OUTDIR)/$(TARGETS) -lpthread
+	$(CC_C) $(CFLAGS) $(SOURCES) -o $(OUTDIR)/$(TARGETS) -lpthread -lm
 
 PrimeThread:
 	make --directory=primeThread
