@@ -125,18 +125,17 @@ void main(void)
     // }; 
     
     // Initialize:
-    for (int i = 0; i < STR_LEN; i++){
-        pSharedMemStruct->ledColor[i] = 0x000f0000;
-    }
-    pSharedMemStruct->isLedOn = true;
+    
     pSharedMemStruct->jsDownPressed = false;
     pSharedMemStruct->jsRightPressed = false;
 
+    for (int i = 0; i < STR_LEN; i++){
+        pSharedMemStruct->ledColor[i] = 0x000f0000;
+    }
     
     // pSharedMemStruct->smileCount = 0x5566;
     pSharedMemStruct->numMsSinceBigBang = 0x0000111122223333;
 
-    
 
     while (true) { 
 
@@ -144,11 +143,11 @@ void main(void)
 
 
         // // Drive LED from shared memory
-        if (pSharedMemStruct->isLedOn) {
-            __R30 |= DIGIT_ON_OFF_MASK;
-        } else {
-            __R30 &= ~DIGIT_ON_OFF_MASK;
-        }
+        // if (pSharedMemStruct->isLedOn) {
+        //     __R30 |= DIGIT_ON_OFF_MASK;
+        // } else {
+        //     __R30 &= ~DIGIT_ON_OFF_MASK;
+        // }
 
         // Sample button state to shared memory
         pSharedMemStruct->jsRightPressed = (__R31 & JOYSTICK_RIGHT_MASK) != 0;

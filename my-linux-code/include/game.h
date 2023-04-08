@@ -13,4 +13,7 @@ void Game_end(void);
 // Function to pause execution of a thread until Game_end() is called and the game ends.
 void Game_wait(void);
 
+// Gets the current score
+int Game_getCurrentScore(void);
+
 #endif
