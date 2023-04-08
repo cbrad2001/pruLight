@@ -124,6 +124,7 @@ static void* gameThread(void *vargp)
         // when user "hits" the generated point.
         pthread_mutex_lock(&animationLock);
         pthread_mutex_unlock(&animationLock);
+        
         sleep(1);
     }
     return 0;

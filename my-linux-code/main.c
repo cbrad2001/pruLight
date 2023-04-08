@@ -18,14 +18,7 @@ int main(void)
 
     PRU_init();
     pSharedPru0 = PRU_getMapping(); // Get access to shared memory for my uses
-            // uint32_t ledColor[NUM_LEDS];
-            // bool isLedOn;
-            // bool jsDownPressed;    
-            // bool jsRightPressed;    
-            // char _p0;
-            // // char _p1, _p2, _p3;
-            // // Must be dword aligned (multiple of 8)
-            // _Alignas(8) uint64_t numMsSinceBigBang;         
+      
     Game_start();
 
     // Print out the mem contents:
@@ -46,30 +39,7 @@ int main(void)
     printf("    %15s: 0x%016llx\n", "numMs", pSharedPru0->numMsSinceBigBang);
 
     
-
-
-
     Game_end();
     PRU_free();
 
-    // // Drive it
-    // for (int i = 0; i < 20; i++) {
-    //     // Drive LED
-    //     pSharedPru0->isLedOn = (i % 2 == 0);
-
-        
-    //     // printf("    %15s: 0x%02x\n", "Accel x coord:", *pSharedPru0->x_val);
-    //     // printf("    %15s: 0x%02x\n", "Accel y coord:", *pSharedPru0->y_val);
-    //     // printf("    %15s: 0x%02x\n", "Accel z coord:", *pSharedPru0->z_val);
-
-    //     // Print button
-    //     printf("Button: %d\n", 
-    //         pSharedPru0->jsRightPressed);
-
-    //     // Timing
-    //     sleep(1);
-    // }
-
-    // Cleanup
-    
 }
