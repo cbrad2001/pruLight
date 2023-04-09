@@ -1,5 +1,6 @@
 #include "include/analogDisplay.h"
 #include "include/game.h"
+#include "helpers.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,28 +83,6 @@ static void writeI2cReg(int i2cFileDescr, unsigned char regAddr, unsigned char v
 		perror("Unable to write i2c register");
 		exit(-1);
 	}
-}
-// provided code by I2C guide
-static void runCommand(char* command) {    
-	// Execute the shell command (output into pipe)    
-	FILE *pipe = popen(command, "r");    
-	// Ignore output of the command; but consume it     
-	// so we don't get an error when closing the pipe.    
-	char buffer[1024];    
-	while (!feof(pipe) && !ferror(pipe)) 
-	{        
-		if (fgets(buffer, sizeof(buffer), pipe) == NULL)            
-			break;        
-		// printf("--> %s", buffer);  // Uncomment for debugging    
-	}    
-	// Get the exit code from the pipe; non-zero is an error:    
-	int exitCode = WEXITSTATUS(pclose(pipe));    
-	if (exitCode != 0) 
-	{        
-		perror("Unable to execute command:");        
-		printf("  command:   %s\n", command);        
-		printf("  exit code: %d\n", exitCode);    
-	} 
 }
 
 // SETUP:

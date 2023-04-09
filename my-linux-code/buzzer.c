@@ -64,7 +64,9 @@ static void* buzzerThread(void *vargp)
         if (notesInBuffer) {
             playNotesInBuffer();
         }
+        sleepForMs(10);
     }
+    return 0;
 }
 
 static void playNotesInBuffer(void)
@@ -77,6 +79,10 @@ static void playNotesInBuffer(void)
             // TODO: play the note
             sprintf(periodBuf, "%d", noteBuffer[i].period);
             sprintf(dutyBuf, "%d", noteBuffer[i].dutyCycle);
+            writeToFile(BUZZER_DUTY_CYCLE_FILE, "0");
+            writeToFile(BUZZER_PERIOD_FILE, periodBuf);
+            writeToFile(BUZZER_DUTY_CYCLE_FILE, dutyBuf);
+            writeToFile(BUZZER_ENABLE_FILE, "1");
         }
         sleepForMs(noteBuffer[i].durationInMs);
         writeToFile(BUZZER_ENABLE_FILE, "0");
@@ -84,8 +90,14 @@ static void playNotesInBuffer(void)
     notesInBuffer = false;
 }
 
-static void writeToFile(char *fileName, char *value)
+static void writeToFile(char *filename, char *dataToWrite)
 {
-    FILE *toWrite = fopen(fileName, "w");
+    FILE *toWrite = fopen(filename, "w");
+    if (toWrite == NULL)
+    {
+        fprintf(stderr, "Error opening %s. Exiting.\n", filename);
+        abort();
+    }
+    fprintf(toWrite, "%s", dataToWrite);
     fclose(toWrite);
 }

@@ -29,7 +29,7 @@ $(TARGETS):
 PrimeThread:
 	make --directory=primeThread
 
-testAccel:
+testModules:
 	make -C ../testModule
 
 clean:
