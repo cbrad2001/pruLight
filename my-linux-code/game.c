@@ -64,6 +64,9 @@ void Game_end(void)
     pthread_mutex_destroy(&animationLock);
     AccelDrv_cleanup();
     Analog_quit();
+    for (int i = 0; i <= 7; i++){
+        pSharedPru0->ledColor[i] = NONE;
+    }
 }
 
 void Game_wait(void)
@@ -75,15 +78,6 @@ int Game_getCurrentScore(void)
 {
     return currentScore;
 }
-
-//temporary
-#define GREEN 0x0f000000
-#define GREEN_BR 0xff000000
-#define RED 0x000f0000
-#define RED_BR 0x00ff0000
-#define BLUE 0x00000f00
-#define BLUE_BR 0x0000ff00
-#define NONE 0x00000000
 
 typedef enum {
     near,
@@ -329,11 +323,11 @@ static void* joystickListener(void *vargp)
             printf("Right Joystick pressed! Game ending...\n");
             Game_end();
         }
-        if (pSharedPru0->jsDownPressed) {
-            pSharedPru0->jsDownPressed = false;
-
+        if (!pSharedPru0->jsDownPressed) {
+            // printf("Down Joystick pressed!\n");
             // if centered
             if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS) {
+                // printf("HIT!\n");
                 // Update to new (x, y) coords
                 generateXYpoint(&xPoint, &yPoint);
                 currentScore += 1;
@@ -342,6 +336,7 @@ static void* joystickListener(void *vargp)
                 hitAnimation();
             }
             else {
+                // printf("Miss!\n");
                 missAnimation();
             }
         }

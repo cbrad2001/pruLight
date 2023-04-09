@@ -142,8 +142,11 @@ void Analog_startDisplaying(void)
 
 void Analog_stopDisplaying(void)
 {
+    printf("Shutting down analog display thread!\n");
 	editReading(first_val,"0");             // turn off readings on end
     editReading(second_val,"0");
+    sleepForMs(5);
+
     isDisplaying = false;
     pthread_join(anDisplayThreadID, NULL);
 }

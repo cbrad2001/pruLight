@@ -2,7 +2,7 @@
 # 1. Config in/out pins for PRU 
 config-pin P8_11 pruout
 config-pin p8_12 pruout
-# config-pin p8_14 pruin
+config-pin p8_16 pruin 
 config-pin p8_15 pruin    
 # Display something on 14-seg display:
 # 2a. Enable I2C:
