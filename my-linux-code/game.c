@@ -334,7 +334,8 @@ static void* joystickListener(void *vargp)
                 // Update to new (x, y) coords
                 generateXYpoint(&xPoint, &yPoint);
                 currentScore += 1;
-
+                Analog_updateDisplay(currentScore);
+                
                 // Note: this will briefly lock up game thread while LED animation plays
                 hitAnimation();
             }

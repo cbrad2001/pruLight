@@ -1,5 +1,5 @@
 #include "include/analogDisplay.h"
-#include "include/game.h"
+#include "include/helpers.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,8 +14,6 @@
 #include <sys/ioctl.h> 
 #include <linux/i2c.h> 
 #include <linux/i2c-dev.h>
-
-#include "include/helpers.h"
 
 #define GPIO_EXPORT_FILE "/sys/class/gpio/export"
 
@@ -40,6 +38,7 @@ static void* dipHistoryToDisplay(void *vargp);
 
 static pthread_t anDisplayThreadID;
 static bool isDisplaying;
+static int currentNumber;
 // static bool isDisplayActive;
 
 /**
@@ -137,6 +136,7 @@ void Analog_quit()
 void Analog_startDisplaying(void)
 {
 	isDisplaying = true;
+	currentNumber = 0;
     pthread_create(&anDisplayThreadID, NULL, &dipHistoryToDisplay, NULL);
 }
 
@@ -149,6 +149,11 @@ void Analog_stopDisplaying(void)
 
     isDisplaying = false;
     pthread_join(anDisplayThreadID, NULL);
+}
+
+void Analog_updateDisplay(int numToDisplay)
+{
+	currentNumber = numToDisplay;
 }
 
 //lower 8 bits associated with register 0x14.... 
@@ -219,7 +224,7 @@ static void* dipHistoryToDisplay(void *vargp)
 	isDisplaying = true;
     while(isDisplaying)
 	{
-        int num_to_display = Game_getCurrentScore();
+        int num_to_display = currentNumber;
         int first_digit = num_to_display / 10;  	//moves the decimal place one to the left
         int second_digit = num_to_display % 10; 	//extracts the first num
 
