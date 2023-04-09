@@ -47,12 +47,14 @@ volatile register uint32_t __R31;   // input GPIO register
 // GPIO Output: P8_12 = pru0_pru_r30_14 
 //   = LEDDP2 (Turn on/off right 14-seg digit) on Zen cape
 // #define DIGIT_ON_OFF_MASK (1 << 14)
+
+
 // GPIO Input: P8_15 = pru0_pru_r31_15 
 //   = JSRT (Joystick Right) on Zen Cape
 //   (Happens to be bit 15 and p8_15; just a coincidence; see P8 header info sheet)
 #define JOYSTICK_RIGHT_MASK (1 << 15)
 
-// GPIO Input P8_16 = pru0_pru_r31_14
+// GPIO Input P8_14 = pru0_pru_r31_14
 //   = JSDN (Joystick Down) on Zen Cape
 #define JOYSTICK_DOWN_MASK (1 << 14)
 

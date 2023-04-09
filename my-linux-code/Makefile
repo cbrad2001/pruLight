@@ -3,7 +3,7 @@
 
 # Edit this file to compile extra C files into their own programs.
 TARGETS = my-linux-code
-SOURCES = accel_drv.c main.c helpers.c i2c_drv.c game.c pru_code.c
+SOURCES = accel_drv.c main.c helpers.c i2c_drv.c game.c pru_code.c analogDisplay.c
 
 PUBDIR = $(HOME)/cmpt433/public/myApps
 

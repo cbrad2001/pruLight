@@ -9,6 +9,7 @@
 #include "include/pru_code.h"
 #include "include/accel_drv.h"
 #include "include/game.h"
+#include "include/analogDisplay.h"
 
 volatile sharedMemStruct_t *pSharedPru0;
 
@@ -20,6 +21,7 @@ int main(void)
     pSharedPru0 = PRU_getMapping(); // Get access to shared memory for my uses
       
     Game_start();
+    Analog_startDisplaying();
 
     // Print out the mem contents:
     printf("From the PRU, memory hold:\n");
@@ -38,7 +40,8 @@ int main(void)
 
     printf("    %15s: 0x%016llx\n", "numMs", pSharedPru0->numMsSinceBigBang);
 
-    
+///
+    Analog_stopDisplaying();
     Game_end();
     PRU_free();
 

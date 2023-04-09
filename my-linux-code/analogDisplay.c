@@ -15,6 +15,8 @@
 #include <linux/i2c.h> 
 #include <linux/i2c-dev.h>
 
+#include "include/helpers.h"
+
 #define GPIO_EXPORT_FILE "/sys/class/gpio/export"
 
 #define I2CDRV_LINUX_BUS0 "/dev/i2c-0" 
@@ -83,29 +85,6 @@ static void writeI2cReg(int i2cFileDescr, unsigned char regAddr, unsigned char v
 		exit(-1);
 	}
 }
-// provided code by I2C guide
-static void runCommand(char* command) {    
-	// Execute the shell command (output into pipe)    
-	FILE *pipe = popen(command, "r");    
-	// Ignore output of the command; but consume it     
-	// so we don't get an error when closing the pipe.    
-	char buffer[1024];    
-	while (!feof(pipe) && !ferror(pipe)) 
-	{        
-		if (fgets(buffer, sizeof(buffer), pipe) == NULL)            
-			break;        
-		// printf("--> %s", buffer);  // Uncomment for debugging    
-	}    
-	// Get the exit code from the pipe; non-zero is an error:    
-	int exitCode = WEXITSTATUS(pclose(pipe));    
-	if (exitCode != 0) 
-	{        
-		perror("Unable to execute command:");        
-		printf("  command:   %s\n", command);        
-		printf("  exit code: %d\n", exitCode);    
-	} 
-}
-
 // SETUP:
 
 // complete the steps from the I2C guide (2.3) to config the board to read values 

@@ -2,6 +2,7 @@
 #include "include/helpers.h"
 #include "include/accel_drv.h"
 #include "include/pru_code.h"
+#include "include/analogDisplay.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -62,6 +63,7 @@ void Game_end(void)
     sem_destroy(&gameRunningSem);
     pthread_mutex_destroy(&animationLock);
     AccelDrv_cleanup();
+    Analog_quit();
 }
 
 void Game_wait(void)
@@ -267,8 +269,8 @@ static void* gameThread(void *vargp)
     while (isRunning) {
         AccelDrv_getReading(&currentX, &currentY, &currentZ);
 
-        printf("    %15s: 0x%02x\n", "isDownPressed", pSharedPru0->jsDownPressed);
-        printf("    %15s: 0x%02x\n", "isRightPressed", pSharedPru0->jsRightPressed);
+        // printf("    %15s: 0x%02x\n", "isDownPressed", pSharedPru0->jsDownPressed);
+        // printf("    %15s: 0x%02x\n", "isRightPressed", pSharedPru0->jsRightPressed);
 
         // Left-Right plane determines COLOR
 
@@ -323,8 +325,8 @@ static void* joystickListener(void *vargp)
 {
     isRunning = true;
     while (isRunning) {
-        if (pSharedPru0->jsRightPressed) {
-            pSharedPru0->jsRightPressed = false;
+        if (!pSharedPru0->jsRightPressed) {
+            printf("Right Joystick pressed! Game ending...\n");
             Game_end();
         }
         if (pSharedPru0->jsDownPressed) {
