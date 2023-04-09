@@ -11,6 +11,8 @@
 
 #define C_NOTE_PERIOD 3822256
 #define C_NOTE_DUTY_CYCLE 1911128
+#define F_NOTE_PERIOD 5727048
+#define F_NOTE_DUTY_CYCLE 2863524
 
 typedef struct Note {
     bool isNote;    // If it is not a note, then this "plays" nothing
