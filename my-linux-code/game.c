@@ -3,6 +3,7 @@
 #include "include/accel_drv.h"
 #include "include/pru_code.h"
 #include "include/analogDisplay.h"
+#include "include/buzzer.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,6 +39,7 @@ static double randMToN(double M, double N);
 void Game_start(void)
 {
     AccelDrv_init();
+    Buzzer_startListening();
     srand((unsigned)time(NULL));
     pSharedPru0 = PRU_getMapping(); // Get access to shared memory for my uses
 
@@ -63,6 +65,7 @@ void Game_end(void)
     sem_destroy(&gameRunningSem);
     pthread_mutex_destroy(&animationLock);
     AccelDrv_cleanup();
+    Buzzer_stopListening();
     Analog_quit();
     for (int i = 0; i <= 7; i++){
         pSharedPru0->ledColor[i] = NONE;
@@ -377,8 +380,24 @@ static void hitAnimation(void)
 {
     pthread_mutex_lock(&animationLock);
     {
-        // TODO: add buzzer code here
+        Note hitSound[4];
+        hitSound[0].isNote = true;
+        hitSound[0].durationInMs = 100;
+        hitSound[0].period = F_NOTE_PERIOD;
+        hitSound[0].dutyCycle = F_NOTE_DUTY_CYCLE;
 
+        hitSound[1].isNote = false;
+        hitSound[1].durationInMs = 100;
+
+        hitSound[2].isNote = true;
+        hitSound[2].durationInMs = 100;
+        hitSound[2].period = C_NOTE_PERIOD;
+        hitSound[2].dutyCycle = C_NOTE_DUTY_CYCLE;
+
+        hitSound[3].isNote = false;
+        hitSound[3].durationInMs = 100;
+
+        Buzzer_addToQueue(hitSound, 4);
         sleep(3); // replace with some sort of lighting animation
     }
     pthread_mutex_unlock(&animationLock);
@@ -388,5 +407,38 @@ static void missAnimation(void)
 {
     // Don't need to trigger animation mutex as right now it only plays a sound to buzzer
     // TODO: add buzzer code here
+    Note missSound[8];
+    missSound[0].isNote = true;
+    missSound[0].durationInMs = 50;
+    missSound[0].period = C_NOTE_PERIOD;
+    missSound[0].dutyCycle = C_NOTE_DUTY_CYCLE;
 
+    missSound[1].isNote = false;
+    missSound[1].durationInMs = 50;
+
+    missSound[2].isNote = true;
+    missSound[2].durationInMs = 50;
+    missSound[2].period = C_NOTE_PERIOD;
+    missSound[2].dutyCycle = C_NOTE_DUTY_CYCLE;
+
+    missSound[3].isNote = false;
+    missSound[3].durationInMs = 50;
+
+    missSound[4].isNote = true;
+    missSound[4].durationInMs = 50;
+    missSound[4].period = C_NOTE_PERIOD;
+    missSound[4].dutyCycle = C_NOTE_DUTY_CYCLE;
+
+    missSound[5].isNote = false;
+    missSound[5].durationInMs = 50;
+
+    missSound[6].isNote = true;
+    missSound[6].durationInMs = 50;
+    missSound[6].period = F_NOTE_PERIOD;
+    missSound[6].dutyCycle = F_NOTE_DUTY_CYCLE;
+
+    missSound[7].isNote = false;
+    missSound[7].durationInMs = 50;
+
+    Buzzer_addToQueue(missSound, 8);
 }
