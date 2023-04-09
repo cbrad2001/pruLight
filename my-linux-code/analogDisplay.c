@@ -142,11 +142,7 @@ void Analog_startDisplaying(void)
 
 void Analog_stopDisplaying(void)
 {
-    printf("Shutting down analog display thread!\n");
-	editReading(first_val,"0");             // turn off readings on end
-    editReading(second_val,"0");
-    sleepForMs(5);
-
+	printf("Shutting down analog display thread!\n");
     isDisplaying = false;
     pthread_join(anDisplayThreadID, NULL);
 }
@@ -248,6 +244,11 @@ static void* dipHistoryToDisplay(void *vargp)
 		editReading(second_val,"1");
 		sleepForMs(5);
     }
+
+	editReading(first_val,"0");             // turn off readings on end
+    editReading(second_val,"0");
+    sleepForMs(5);
+
 	close(i2cFileDesc);     						//cleanup i2c access
     return 0;
 }
