@@ -2,6 +2,7 @@
 #include "include/helpers.h"
 #include "include/accel_drv.h"
 #include "include/pru_code.h"
+#include "include/analogDisplay.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,6 +13,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <time.h>
+#include <math.h>
 
 #define HYSTERESIS 0.1
 
@@ -61,6 +63,10 @@ void Game_end(void)
     sem_destroy(&gameRunningSem);
     pthread_mutex_destroy(&animationLock);
     AccelDrv_cleanup();
+    Analog_quit();
+    for (int i = 0; i <= 7; i++){
+        pSharedPru0->ledColor[i] = NONE;
+    }
 }
 
 void Game_wait(void)
@@ -73,74 +79,255 @@ int Game_getCurrentScore(void)
     return currentScore;
 }
 
-//temporary
-#define GREEN 0x0f000000
-#define RED 0x000f0000
-#define BLUE 0x00000f00
+typedef enum {
+    near,
+    far,
+    very_far,
+    hit,
+} distance_t;
 
-static void populate_with(uint32_t code){
-    for (int i = 0; i < 8; i++){
-        pSharedPru0->ledColor[i] = code;
+typedef enum {
+    up,
+    down,
+    level,
+    left,
+    right,
+} direction_t;
+
+typedef struct{
+    // uint32_t color;
+    direction_t x_dir;
+    direction_t y_dir;
+    distance_t y_dist;
+} neo_display_t;
+
+static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dist){
+
+    for (int i = 0; i <= 7; i++){
+        pSharedPru0->ledColor[i] = NONE;
     }
+
+    if ( dir_UD == up && dist == very_far){         //VERY FAR AWAY UP
+        if (dir_LR == left)
+            pSharedPru0->ledColor[7] = RED_BR;
+        if (dir_LR == right)
+            pSharedPru0->ledColor[7] = GREEN_BR;
+        if (dir_LR == level)
+            pSharedPru0->ledColor[7] = BLUE_BR;
+        return;
+    }
+    
+    if ( dir_UD == down && dist == very_far){         //FAR AWAY DOWN
+        if (dir_LR == left)
+            pSharedPru0->ledColor[0] = RED_BR;
+        if (dir_LR == right)
+            pSharedPru0->ledColor[0] = GREEN_BR;
+        if (dir_LR == level)
+            pSharedPru0->ledColor[0] = BLUE_BR;
+        return;
+    }
+
+    if ( dir_LR == left && dist == hit){           // HIT but RIGHT
+        for (int i = 0; i <= 7; i++)
+            pSharedPru0->ledColor[i] = RED;
+        
+        pSharedPru0->ledColor[3] = RED_BR;
+        pSharedPru0->ledColor[4] = RED_BR;
+        return;
+    }
+
+    if ( dir_UD == level && dir_LR == level && dist == hit){           // HIT
+        for (int i = 0; i <= 7; i++)
+            pSharedPru0->ledColor[i] = BLUE;
+        
+        pSharedPru0->ledColor[3] = BLUE_BR;
+        pSharedPru0->ledColor[4] = BLUE_BR;
+        return;
+    }
+
+    if ( dir_LR == right && dist == hit){           // HIT but RIGHT
+        for (int i = 0; i <= 7; i++)
+            pSharedPru0->ledColor[i] = GREEN;
+        
+        pSharedPru0->ledColor[3] = GREEN_BR;
+        pSharedPru0->ledColor[4] = GREEN_BR;
+        return;
+    }
+
+    if ( dir_UD == up && dist == far){              //FAR AWAY UP
+        if (dir_LR == left){
+            pSharedPru0->ledColor[7] = RED;
+            pSharedPru0->ledColor[6] = RED_BR;
+            pSharedPru0->ledColor[5] = RED;
+        }
+            
+        if (dir_LR == right){
+            pSharedPru0->ledColor[7] = GREEN;
+            pSharedPru0->ledColor[6] = GREEN_BR;
+            pSharedPru0->ledColor[5] = GREEN;
+        }
+        if (dir_LR == level){
+            pSharedPru0->ledColor[7] = BLUE;
+            pSharedPru0->ledColor[6] = BLUE_BR;
+            pSharedPru0->ledColor[5] = BLUE;
+        }
+        return;
+    }
+
+     if ( dir_UD == down && dist == far){           //FAR AWAY DOWN
+        if (dir_LR == left){
+            pSharedPru0->ledColor[2] = RED;
+            pSharedPru0->ledColor[1] = RED_BR;
+            pSharedPru0->ledColor[0] = RED;
+        }
+            
+        if (dir_LR == right){
+            pSharedPru0->ledColor[2] = GREEN;
+            pSharedPru0->ledColor[1] = GREEN_BR;
+            pSharedPru0->ledColor[0] = GREEN;
+        }
+        if (dir_LR == level){
+            pSharedPru0->ledColor[2] = BLUE;
+            pSharedPru0->ledColor[1] = BLUE_BR;
+            pSharedPru0->ledColor[0] = BLUE;
+        }
+        return;
+    }
+
+    if ( dir_UD == up && dist == near){              // CLOSE UP
+        if (dir_LR == left){
+            pSharedPru0->ledColor[6] = RED;
+            pSharedPru0->ledColor[5] = RED_BR;
+            pSharedPru0->ledColor[4] = RED;
+        }
+            
+        if (dir_LR == right){
+            pSharedPru0->ledColor[5] = GREEN;
+            pSharedPru0->ledColor[4] = GREEN_BR;
+            pSharedPru0->ledColor[3] = GREEN;
+        }
+        if (dir_LR == level){
+            pSharedPru0->ledColor[5] = BLUE;
+            pSharedPru0->ledColor[4] = BLUE_BR;
+            pSharedPru0->ledColor[3] = BLUE;
+        }
+        return;
+    }
+
+    if ( dir_UD == down && dist == near){           // CLOSE DOWN
+        if (dir_LR == left){
+            pSharedPru0->ledColor[3] = RED;
+            pSharedPru0->ledColor[2] = RED_BR;
+            pSharedPru0->ledColor[1] = RED;
+        }
+            
+        if (dir_LR == right){
+            pSharedPru0->ledColor[3] = GREEN;
+            pSharedPru0->ledColor[2] = GREEN_BR;
+            pSharedPru0->ledColor[1] = GREEN;
+        }
+        if (dir_LR == level){
+            pSharedPru0->ledColor[3] = BLUE;
+            pSharedPru0->ledColor[2] = BLUE_BR;
+            pSharedPru0->ledColor[1] = BLUE;
+        }
+        return;
+    }
+}
+
+static double getDist(double pt1, double pt2){
+    return sqrt((pt1*pt1)-(pt2*pt2));
+}
+
+static distance_t convertDistToVal(double dist){
+    if (dist > 0.7) 
+        return very_far;
+    else if (dist > 0.4) 
+        return far;
+    else 
+        return near;
 }
 
 static void* gameThread(void *vargp)
 {
-    
+    neo_display_t toDisplay;
+
     currentX = 0, currentY = 0, currentZ = 0;
+    double dist = 0; 
     xPoint = currentX, yPoint = currentY;
     generateXYpoint(&xPoint, &yPoint);
 
     // Notes: Leaning left gives positive Y values, and right gives negative Y values
     // Tilting up gives negative X values, and down gives positive X values
+    isRunning = true;
     while (isRunning) {
         AccelDrv_getReading(&currentX, &currentY, &currentZ);
 
-        // if left (-1 to 0): red
-        if (currentX <= xPoint-HYSTERESIS){
-            printf("RED\n");
-            populate_with(RED);
+        // printf("    %15s: 0x%02x\n", "isDownPressed", pSharedPru0->jsDownPressed);
+        // printf("    %15s: 0x%02x\n", "isRightPressed", pSharedPru0->jsRightPressed);
+
+        // Left-Right plane determines COLOR
+
+        if (currentX <= xPoint-HYSTERESIS)      // if left (-1 to 0): red
+            toDisplay.x_dir = left;
+        
+        if (currentX >= xPoint+HYSTERESIS)      // if right: green
+            toDisplay.x_dir = right;           
+            
+        if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS) //if centered: blue
+            toDisplay.x_dir = level; 
+
+        // Up-Down plane determines LEDS
+
+        if (currentY <= yPoint-HYSTERESIS){  // pointing DOWN, display bottom 3 LEDS
+            dist = getDist(currentY,yPoint-HYSTERESIS);
+            toDisplay.y_dist = convertDistToVal(dist);
+            toDisplay.y_dir = down;
         }
 
-        //if right: green
-        if (currentX >= xPoint+HYSTERESIS){
-            printf("GREEN\n");
-            populate_with(GREEN);            
-        }
-    
-
-        //if centered: blue
-        if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS ){
-            printf("BLUE\n");
-            populate_with(BLUE);
+        if (currentY >= yPoint+HYSTERESIS){  // pointing UP, display top 3 LEDS
+            dist = getDist(currentY,yPoint+HYSTERESIS);
+            toDisplay.y_dist = convertDistToVal(dist);
+            toDisplay.y_dir = up;
         }
         
-        printf("Printing hex values:\n");
-        for (int i = 0; i < 8; i++){
-            printf("hex%i: %02x\t",i, pSharedPru0->ledColor[i]);
+        if (currentY > yPoint-HYSTERESIS && currentY < yPoint+HYSTERESIS){
+            toDisplay.y_dist = hit;
+            toDisplay.y_dir = level;
         }
+
+        // POPULATE SHARED MEM WITH DATA
+
+        populate_with(toDisplay.x_dir,toDisplay.y_dir,toDisplay.y_dist);
+        
+        // printf("Printing hex values:\n");
+        // for (int i = 0; i < 8; i++){
+        //     printf("hex%i: %02x\t",i, pSharedPru0->ledColor[i]);
+        // }
 
         // Execution should stop here when LED animation is playing 
         // when user "hits" the generated point.
         pthread_mutex_lock(&animationLock);
         pthread_mutex_unlock(&animationLock);
-        sleep(1);
+
+        sleepForMs(10);
     }
     return 0;
 }
 
 static void* joystickListener(void *vargp)
 {
+    isRunning = true;
     while (isRunning) {
-        if (pSharedPru0->jsRightPressed) {
-            pSharedPru0->jsRightPressed = false;
+        if (!pSharedPru0->jsRightPressed) {
+            printf("Right Joystick pressed! Game ending...\n");
             Game_end();
         }
-        if (pSharedPru0->jsDownPressed) {
-            pSharedPru0->jsDownPressed = false;
-
+        if (!pSharedPru0->jsDownPressed) {
+            // printf("Down Joystick pressed!\n");
             // if centered
             if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS) {
+                // printf("HIT!\n");
                 // Update to new (x, y) coords
                 generateXYpoint(&xPoint, &yPoint);
                 currentScore += 1;
@@ -149,6 +336,7 @@ static void* joystickListener(void *vargp)
                 hitAnimation();
             }
             else {
+                // printf("Miss!\n");
                 missAnimation();
             }
         }
@@ -200,4 +388,5 @@ static void missAnimation(void)
 {
     // Don't need to trigger animation mutex as right now it only plays a sound to buzzer
     // TODO: add buzzer code here
+
 }

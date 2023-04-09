@@ -105,3 +105,4 @@ static void writeToFile(char *filename, char *dataToWrite)
     fprintf(toWrite, "%s", dataToWrite);
     fclose(toWrite);
 }
+

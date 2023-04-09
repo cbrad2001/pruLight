@@ -1,6 +1,5 @@
 #include "include/analogDisplay.h"
 #include "include/game.h"
-#include "helpers.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +14,8 @@
 #include <sys/ioctl.h> 
 #include <linux/i2c.h> 
 #include <linux/i2c-dev.h>
+
+#include "include/helpers.h"
 
 #define GPIO_EXPORT_FILE "/sys/class/gpio/export"
 
@@ -84,7 +85,6 @@ static void writeI2cReg(int i2cFileDescr, unsigned char regAddr, unsigned char v
 		exit(-1);
 	}
 }
-
 // SETUP:
 
 // complete the steps from the I2C guide (2.3) to config the board to read values 
@@ -142,8 +142,11 @@ void Analog_startDisplaying(void)
 
 void Analog_stopDisplaying(void)
 {
+    printf("Shutting down analog display thread!\n");
 	editReading(first_val,"0");             // turn off readings on end
     editReading(second_val,"0");
+    sleepForMs(5);
+
     isDisplaying = false;
     pthread_join(anDisplayThreadID, NULL);
 }
