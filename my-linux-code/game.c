@@ -112,48 +112,42 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
 
     if ( dir_UD == up && dist == very_far){         //VERY FAR AWAY UP
         if (dir_LR == left)
-            pSharedPru0->ledColor[7] = RED_BR;
+            pSharedPru0->ledColor[7] = RED;
         if (dir_LR == right)
-            pSharedPru0->ledColor[7] = GREEN_BR;
+            pSharedPru0->ledColor[7] = GREEN;
         if (dir_LR == level)
-            pSharedPru0->ledColor[7] = BLUE_BR;
+            pSharedPru0->ledColor[7] = BLUE;
         return;
     }
     
     if ( dir_UD == down && dist == very_far){         //FAR AWAY DOWN
         if (dir_LR == left)
-            pSharedPru0->ledColor[0] = RED_BR;
+            pSharedPru0->ledColor[0] = RED;
         if (dir_LR == right)
-            pSharedPru0->ledColor[0] = GREEN_BR;
+            pSharedPru0->ledColor[0] = GREEN;
         if (dir_LR == level)
-            pSharedPru0->ledColor[0] = BLUE_BR;
+            pSharedPru0->ledColor[0] = BLUE;
         return;
     }
 
     if ( dir_LR == left && dist == hit){           // HIT but RIGHT
         for (int i = 0; i <= 7; i++)
-            pSharedPru0->ledColor[i] = RED;
+            pSharedPru0->ledColor[i] = RED_BR;
         
-        pSharedPru0->ledColor[3] = RED_BR;
-        pSharedPru0->ledColor[4] = RED_BR;
         return;
     }
 
     if ( dir_UD == level && dir_LR == level && dist == hit){           // HIT
         for (int i = 0; i <= 7; i++)
-            pSharedPru0->ledColor[i] = BLUE;
+            pSharedPru0->ledColor[i] = BLUE_BR;
         
-        pSharedPru0->ledColor[3] = BLUE_BR;
-        pSharedPru0->ledColor[4] = BLUE_BR;
         return;
     }
 
     if ( dir_LR == right && dist == hit){           // HIT but RIGHT
         for (int i = 0; i <= 7; i++)
-            pSharedPru0->ledColor[i] = GREEN;
-        
-        pSharedPru0->ledColor[3] = GREEN_BR;
-        pSharedPru0->ledColor[4] = GREEN_BR;
+            pSharedPru0->ledColor[i] = GREEN_BR;
+
         return;
     }
 
@@ -300,14 +294,8 @@ static void* gameThread(void *vargp)
         }
 
         // POPULATE SHARED MEM WITH DATA
-
         populate_with(toDisplay.x_dir,toDisplay.y_dir,toDisplay.y_dist);
         
-        // printf("Printing hex values:\n");
-        // for (int i = 0; i < 8; i++){
-        //     printf("hex%i: %02x\t",i, pSharedPru0->ledColor[i]);
-        // }
-
         // Execution should stop here when LED animation is playing 
         // when user "hits" the generated point.
         pthread_mutex_lock(&animationLock);
@@ -329,7 +317,8 @@ static void* joystickListener(void *vargp)
         if (!pSharedPru0->jsDownPressed) {
             // printf("Down Joystick pressed!\n");
             // if centered
-            if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS) {
+            if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS && 
+                currentY > yPoint-HYSTERESIS && currentY < yPoint+HYSTERESIS) {
                 // printf("HIT!\n");
                 // Update to new (x, y) coords
                 generateXYpoint(&xPoint, &yPoint);
