@@ -11,4 +11,7 @@ void Analog_quit();
 void Analog_startDisplaying(void);
 void Analog_stopDisplaying(void);
 
+// Updates the 14 seg display to output the passed in number.
+void Analog_updateDisplay(int numToDisplay);
+
 #endif
