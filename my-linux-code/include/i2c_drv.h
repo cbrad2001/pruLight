@@ -18,6 +18,8 @@ typedef struct {
 } i2c_device_t;
 
 
+
+// start reading i2c
 void I2cDrv_init(i2c_device_t *pdevice);
 void I2cDrv_cleanup(i2c_device_t *pdevice);
 

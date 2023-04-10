@@ -1,8 +1,6 @@
 /*  buzzer.h
-*   
 *   Module that defines a background thread to listen for commands regarding when to play a buzzer.
 */
-
 #ifndef _BUZZER_H_
 #define _BUZZER_H_
 

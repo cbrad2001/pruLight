@@ -90,7 +90,7 @@ static void writeI2cReg(int i2cFileDescr, unsigned char regAddr, unsigned char v
 // configures the pin, creates the file descriptor and sets the register values
 static int init_display()
 {
-	runCommand("config-pin P9_18 i2c");         //config pins
+	runCommand("config-pin P9_18 i2c");         //config pins (also done in script)
 	runCommand("config-pin P9_17 i2c");
 	sleepForMs(350);
 

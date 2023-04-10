@@ -36,6 +36,8 @@ static void missAnimation(void);
 // Taken from https://stackoverflow.com/questions/1340729/how-do-you-generate-a-random-double-uniformly-distributed-between-0-and-1-from-c
 static double randMToN(double M, double N);
 
+
+//main algorithm starts here
 void Game_start(void)
 {
     AccelDrv_init();
@@ -82,6 +84,7 @@ int Game_getCurrentScore(void)
     return currentScore;
 }
 
+// structs and enums represent orientation
 typedef enum {
     near,
     far,
@@ -104,6 +107,7 @@ typedef struct{
     distance_t y_dist;
 } neo_display_t;
 
+// determines how to light up the Neopixel according to the orientation of the board
 static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dist){
 
     for (int i = 0; i <= 7; i++){
@@ -232,14 +236,17 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
     }
 }
 
+//finds the distance between two points
 static double getDist(double pt1, double pt2){
     return sqrt((pt1*pt1)-(pt2*pt2));
 }
 
+//  takes in the distance from the point and returns the enum
+//  associated to the LED display
 static distance_t convertDistToVal(double dist){
-    if (dist > 0.7) 
+    if (dist > 0.6) 
         return very_far;
-    else if (dist > 0.4) 
+    else if (dist > 0.35) 
         return far;
     else 
         return near;
@@ -259,9 +266,6 @@ static void* gameThread(void *vargp)
     isRunning = true;
     while (isRunning) {
         AccelDrv_getReading(&currentX, &currentY, &currentZ);
-
-        // printf("    %15s: 0x%02x\n", "isDownPressed", pSharedPru0->jsDownPressed);
-        // printf("    %15s: 0x%02x\n", "isRightPressed", pSharedPru0->jsRightPressed);
 
         // Left-Right plane determines COLOR
 
@@ -319,17 +323,17 @@ static void* joystickListener(void *vargp)
             // if centered
             if (currentX > xPoint-HYSTERESIS && currentX < xPoint+HYSTERESIS && 
                 currentY > yPoint-HYSTERESIS && currentY < yPoint+HYSTERESIS) {
-                // printf("HIT!\n");
                 // Update to new (x, y) coords
                 generateXYpoint(&xPoint, &yPoint);
                 currentScore += 1;
                 Analog_updateDisplay(currentScore);
+                printf("*** HIT! ***\n");
                 
                 // Note: this will briefly lock up game thread while LED animation plays
                 hitAnimation();
             }
             else {
-                // printf("Miss!\n");
+                printf("* Miss! *\n");
                 missAnimation();
             }
         }
@@ -363,7 +367,7 @@ static void generateXYpoint(double *toChangeX, double *toChangeY)
         *toChangeY += randY;
     }
 
-    printf("X point: %f\tY point: %f\n", *toChangeX, *toChangeY);
+    printf("Generating New Points: \t X point: %f\tY point: %f\n", *toChangeX, *toChangeY);
 }
 
 static void hitAnimation(void)

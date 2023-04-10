@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-// #include <stdalign.h>
 
 #define NUM_LEDS 8
 #define LED_OFF 0
@@ -19,22 +18,13 @@
 // My Shared Memory Structure
 // ----------------------------------------------------------------
 typedef struct {
-    //1B
-    bool jsDownPressed;     // "Fire" action
-    //1B
+    bool jsDownPressed;     // "Fire" action    each 1B
     bool jsRightPressed;    // Exits the game
 
     _Alignas(4) uint32_t ledColor[NUM_LEDS];
 
-
-    // // Padding
-    // char _p0;
-    // char _p1, _p2, _p3;
-
     // Must be dword aligned (multiple of 8)
-    _Alignas(8) uint64_t numMsSinceBigBang;             // Works!
-    // _Alignas(uint64_t) uint64_t numMsSinceBigBang;      // Fails!
-    
+    // _Alignas(8) uint64_t numMsSinceBigBang;                // Works! (not necessary, uncomment for testing)    
 } sharedMemStruct_t;
 
 #endif
