@@ -115,9 +115,9 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
     }
 
     if ( dir_UD == up && dist == very_far){         //VERY FAR AWAY UP
-        if (dir_LR == left)
-            pSharedPru0->ledColor[7] = RED;
         if (dir_LR == right)
+            pSharedPru0->ledColor[7] = RED;
+        if (dir_LR == left)
             pSharedPru0->ledColor[7] = GREEN;
         if (dir_LR == level)
             pSharedPru0->ledColor[7] = BLUE;
@@ -125,16 +125,16 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
     }
     
     if ( dir_UD == down && dist == very_far){         //FAR AWAY DOWN
-        if (dir_LR == left)
-            pSharedPru0->ledColor[0] = RED;
         if (dir_LR == right)
+            pSharedPru0->ledColor[0] = RED;
+        if (dir_LR == left)
             pSharedPru0->ledColor[0] = GREEN;
         if (dir_LR == level)
             pSharedPru0->ledColor[0] = BLUE;
         return;
     }
 
-    if ( dir_LR == left && dist == hit){           // HIT but RIGHT
+    if ( dir_LR == right && dist == hit){           // HIT but RIGHT
         for (int i = 0; i <= 7; i++)
             pSharedPru0->ledColor[i] = RED_BR;
         
@@ -148,7 +148,7 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
         return;
     }
 
-    if ( dir_LR == right && dist == hit){           // HIT but RIGHT
+    if ( dir_LR == left && dist == hit){           // HIT but RIGHT
         for (int i = 0; i <= 7; i++)
             pSharedPru0->ledColor[i] = GREEN_BR;
 
@@ -156,13 +156,13 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
     }
 
     if ( dir_UD == up && dist == far){              //FAR AWAY UP
-        if (dir_LR == left){
+        if (dir_LR == right){
             pSharedPru0->ledColor[7] = RED;
             pSharedPru0->ledColor[6] = RED_BR;
             pSharedPru0->ledColor[5] = RED;
         }
             
-        if (dir_LR == right){
+        if (dir_LR == left){
             pSharedPru0->ledColor[7] = GREEN;
             pSharedPru0->ledColor[6] = GREEN_BR;
             pSharedPru0->ledColor[5] = GREEN;
@@ -176,13 +176,13 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
     }
 
      if ( dir_UD == down && dist == far){           //FAR AWAY DOWN
-        if (dir_LR == left){
+        if (dir_LR == right){
             pSharedPru0->ledColor[2] = RED;
             pSharedPru0->ledColor[1] = RED_BR;
             pSharedPru0->ledColor[0] = RED;
         }
             
-        if (dir_LR == right){
+        if (dir_LR == left){
             pSharedPru0->ledColor[2] = GREEN;
             pSharedPru0->ledColor[1] = GREEN_BR;
             pSharedPru0->ledColor[0] = GREEN;
@@ -196,33 +196,33 @@ static void populate_with(direction_t dir_LR, direction_t dir_UD, distance_t dis
     }
 
     if ( dir_UD == up && dist == near){              // CLOSE UP
-        if (dir_LR == left){
+        if (dir_LR == right){
             pSharedPru0->ledColor[6] = RED;
             pSharedPru0->ledColor[5] = RED_BR;
             pSharedPru0->ledColor[4] = RED;
         }
             
-        if (dir_LR == right){
-            pSharedPru0->ledColor[5] = GREEN;
-            pSharedPru0->ledColor[4] = GREEN_BR;
-            pSharedPru0->ledColor[3] = GREEN;
+        if (dir_LR == left){
+            pSharedPru0->ledColor[6] = GREEN;
+            pSharedPru0->ledColor[5] = GREEN_BR;
+            pSharedPru0->ledColor[4] = GREEN;
         }
         if (dir_LR == level){
-            pSharedPru0->ledColor[5] = BLUE;
-            pSharedPru0->ledColor[4] = BLUE_BR;
-            pSharedPru0->ledColor[3] = BLUE;
+            pSharedPru0->ledColor[6] = BLUE;
+            pSharedPru0->ledColor[5] = BLUE_BR;
+            pSharedPru0->ledColor[4] = BLUE;
         }
         return;
     }
 
     if ( dir_UD == down && dist == near){           // CLOSE DOWN
-        if (dir_LR == left){
+        if (dir_LR == right){
             pSharedPru0->ledColor[3] = RED;
             pSharedPru0->ledColor[2] = RED_BR;
             pSharedPru0->ledColor[1] = RED;
         }
             
-        if (dir_LR == right){
+        if (dir_LR == left){
             pSharedPru0->ledColor[3] = GREEN;
             pSharedPru0->ledColor[2] = GREEN_BR;
             pSharedPru0->ledColor[1] = GREEN;
